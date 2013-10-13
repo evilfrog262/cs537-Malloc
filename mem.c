@@ -97,18 +97,15 @@ Mem_Alloc(int size, int style)
         }
         
     }//END FIRST FIT
-    hPointer = memPointer;
-    memPointer = hPointer + MAX_HEADER_SIZE
-    hPointer->size = size;
     if memPointer != NULL
     {
         if parent == NULL
         {
-            head = memPointer + size;
+            head = memPointer + size + MAX_HEADER_SIZE;
         }
-        else if parent != NULL
+        if parent != NULL
         {
-            parent->next = memPointer + size;
+            parent->next = memPointer + size + MAX_HEADER_SIZE;
         }
     }
     return (void *)memPointer;
