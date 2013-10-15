@@ -35,14 +35,37 @@ int pageSize;
 int
 Mem_Init(int sizeOfRegion)
 {
-    rintf("I'm calling : mem_init()\n");
+    int numPages;
+    printf("I'm calling : mem_init()\n");
+
     // check for fail cases
     if (sizeOfRegion <= 0 || callsToInit > 0) {
       m_error = E_BAD_ARGS;
       return -1;
     }
+
     pageSize = getpagesize();
     printf("Page Size: %d\n", pageSize);
+    // calculate number of pages needed
+    numPages = sizeOfRegion/pageSize;
+    // if this is not enough space, round up (add another page)
+    if ( (numPages * pageSize) < sizeOfRegion) {
+      sizeOfRegion += (pageSize - sizeOfRegion);
+    }
+    printf("Size of Region: %d\n", sizeOfRegion);
+    // open the dev/zero device
+    int fd = open("/dev/zero", O_RDWR);
+
+    // sizeOfRegion (in bytes) needs to be evenly divisible by page size
+    void *ptr = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    if (ptr == MAP_FAILED) {
+      perror("mmap");
+      exit(1);
+    }
+
+    // close the device
+    close(fd);
+
     callsToInit++;
     return 0;
 }
@@ -51,7 +74,7 @@ Mem_Init(int sizeOfRegion)
 void *
 Mem_Alloc(int size, int style)
 {
-    header_t = *hPointer = NULL;
+  /* header_t = *hPointer = NULL;
     list_t *memPointer = NULL;
     list_t *tmp = head;
     list_t *parent = NULL;
@@ -97,7 +120,7 @@ Mem_Alloc(int size, int style)
     else if (style ==2)
     {// FIRST FIT
         while(tmp){
-            if (tmp->size > size +MAX_HEADER_SIZE){
+            if (tmp->size > size + MAX_HEADER_SIZE){
                 memPointer = tmp;
                 if(previousNode != NULL){
                     parent = previousNode;
@@ -123,7 +146,8 @@ Mem_Alloc(int size, int style)
             parent->next = memPointer + size;
         }
     }
-    return (void *)memPointer;
+    return (void *)memPointer;*/
+  return 0;
 }
 
 //<--TO-DO-->KRISTIN
