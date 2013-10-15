@@ -74,12 +74,13 @@ Mem_Init(int sizeOfRegion)
 void *
 Mem_Alloc(int size, int style)
 {
-  /* header_t = *hPointer = NULL;
+    header_t *hPointer = NULL;
     list_t *memPointer = NULL;
     list_t *tmp = head;
     list_t *parent = NULL;
     list_t *previousNode = NULL;
-    if style == 0
+    int bestSize;
+    if(style == 0)
     {//BESTFIT
         bestSize = tmp->size;
         while(tmp){
@@ -132,21 +133,21 @@ Mem_Alloc(int size, int style)
         }
         
     }//END FIRST FIT
-    if memPointer != NULL
+    if(memPointer != NULL)
     {
-        hPointer = memPointer;
-        memPointer = hPointer + MAX_HEADER_SIZE;
+        hPointer = (void *)memPointer;
+        memPointer = (void*)hPointer + MAX_HEADER_SIZE;
         
-        if parent == NULL
+        if(parent == NULL)
         {
             head = memPointer + size;
         }
-        if parent != NULL
+        if(parent != NULL)
         {
             parent->next = memPointer + size;
         }
     }
-    return (void *)memPointer;*/
+    return (void *)memPointer;
   return 0;
 }
 
