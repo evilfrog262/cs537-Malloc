@@ -31,7 +31,15 @@ list_t *head = NULL;
 int
 Mem_Init(int sizeOfRegion)
 {
-    printf("I'm calling : mem_init()");
+    rintf("I'm calling : mem_init()\n");
+    // check for fail cases
+    if (sizeOfRegion <= 0 || callsToInit > 0) {
+      m_error = E_BAD_ARGS;
+      return -1;
+    }
+    pageSize = getpagesize();
+    printf("Page Size: %d\n", pageSize);
+    callsToInit++;
     return 0;
 }
 
