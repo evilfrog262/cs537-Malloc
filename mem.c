@@ -26,6 +26,10 @@ typedef struct __header_t{
 
 //head of list
 list_t *head = NULL;
+// number of calls made to mem_init
+int callsToInit = 0;
+// size of page in virtual memory
+int pageSize;
 
 //<--TO-DO-->KRISTIN
 int
