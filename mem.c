@@ -77,14 +77,14 @@ Mem_Alloc(int size, int style)
 {
     header_t *hPointer = NULL;
     int newSize =0;
-    list_t *memPointer = NULL;
+    void *memPointer = NULL;
     list_t *tmp = head;
     int bestSize;
     if(style == 0)
     {//BESTFIT
         bestSize = tmp->size;
         while(tmp){
-            if (tmp->size > size + MAX_HEADER_SIZE){
+            if (tmp->size > size + sizeof(header_t)){
                 if(tmp->size <= bestSize){
                     memPointer = tmp;
                     bestSize = tmp->size;
@@ -99,7 +99,7 @@ Mem_Alloc(int size, int style)
     {// WORST FIT
         bestSize = 0;
         while(tmp){
-            if (tmp->size > size + MAX_HEADER_SIZE){
+            if (tmp->size > size + sizeof(header_t)){
                 if(tmp->size >= bestSize){
                     memPointer = tmp;
                     bestSize = tmp->size;
@@ -113,7 +113,7 @@ Mem_Alloc(int size, int style)
     else if (style ==2)
     {// FIRST FIT
         while(tmp){
-            if (tmp->size > size + MAX_HEADER_SIZE){
+            if (tmp->size > size + sizeof(header_t)){
                 memPointer = tmp;
                 break;
             }
@@ -123,10 +123,11 @@ Mem_Alloc(int size, int style)
     }//END FIRST FIT
     if(memPointer != NULL)
     {
-        tmp = memPointer;
-        newSize = memPointer->size - size - MAX_HEADER_SIZE;
-        memPointer = memPointer + memPointer->size -size;
-        hPointer = (void *)memPointer - MAX_HEADER_SIZE;
+        tmp = (void *) memPointer;
+        newSize = tmp->size - size - sizeof(header_t);
+        memPointer = memPointer + tmp->size - size;
+        hPointer = (void *)memPointer - sizeof(header_t);
+        hPointer->size = size;
         tmp->size = newSize;
     }
     return (void *)memPointer;
