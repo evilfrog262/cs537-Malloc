@@ -10,6 +10,7 @@
 
 int m_error;
 
+// NOTE: export LD_LIBRARY_PATH="./"
 
 typedef struct __list_t{
     int size;
@@ -35,7 +36,6 @@ int pageSize;
 int
 Mem_Init(int sizeOfRegion)
 {
-    int numPages;
     printf("I'm calling : mem_init()\n");
 
     // check for fail cases
@@ -46,24 +46,23 @@ Mem_Init(int sizeOfRegion)
 
     pageSize = getpagesize();
     printf("Page Size: %d\n", pageSize);
-    // calculate number of pages needed
-    numPages = sizeOfRegion/pageSize;
-    // if this is not enough space, round up (add another page)
-    if ( (numPages * pageSize) < sizeOfRegion) {
-      sizeOfRegion += (pageSize - sizeOfRegion);
+
+    // make sure region is evenly divisible by page size
+    if ( (sizeOfRegion % pageSize) != 0) {
+      // add the page size minus the remainder
+      sizeOfRegion += (pageSize - (sizeOfRegion % pageSize));
     }
+
     printf("Size of Region: %d\n", sizeOfRegion);
-    // open the dev/zero device
+    
     int fd = open("/dev/zero", O_RDWR);
 
-    // sizeOfRegion (in bytes) needs to be evenly divisible by page size
-    void *ptr = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-    if (ptr == MAP_FAILED) {
+    head = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    if (head == MAP_FAILED) {
       perror("mmap");
       exit(1);
     }
 
-    // close the device
     close(fd);
 
     callsToInit++;
