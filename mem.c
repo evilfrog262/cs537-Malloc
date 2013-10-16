@@ -56,6 +56,7 @@ Mem_Init(int sizeOfRegion)
     
     // CALL TO MMAP AND INITIALIZE LIST HEADER
     int fd = open("/dev/zero", O_RDWR);
+    printf("%d\n",fd);
     head = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (head == MAP_FAILED) {
       perror("mmap");
