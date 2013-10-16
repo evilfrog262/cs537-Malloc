@@ -38,32 +38,33 @@ Mem_Init(int sizeOfRegion)
 {
     printf("I'm calling : mem_init()\n");
 
-    // check for fail cases
+    // CHECK FOR FAILURE CASES
     if (sizeOfRegion <= 0 || callsToInit > 0) {
       m_error = E_BAD_ARGS;
       return -1;
     }
 
+    // CALCULATE SIZE OF REGION
     pageSize = getpagesize();
     printf("Page Size: %d\n", pageSize);
-
     // make sure region is evenly divisible by page size
     if ( (sizeOfRegion % pageSize) != 0) {
-      // add the page size minus the remainder
       sizeOfRegion += (pageSize - (sizeOfRegion % pageSize));
     }
-
     printf("Size of Region: %d\n", sizeOfRegion);
     
-    int fd = open("/dev/zero", O_RDWR);
 
+    // CALL TO MMAP AND INITIALIZE LIST HEADER
+    int fd = open("/dev/zero", O_RDWR);
     head = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (head == MAP_FAILED) {
       perror("mmap");
       exit(1);
     }
-
+    head->size = sizeOfRegion;
+    head->next = NULL;
     close(fd);
+
 
     callsToInit++;
     return 0;
