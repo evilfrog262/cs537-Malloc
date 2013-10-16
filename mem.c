@@ -155,7 +155,26 @@ Mem_Alloc(int size, int style)
 int
 Mem_Free(void *ptr)
 {
+  printf("I'm calling: Mem_Free()\n");
+  if (ptr == NULL) {
     return -1;
+  }
+
+  // FIND SIZE OF FREE REGION
+  header_t *hptr = (void *) ptr - sizeof(header_t);
+  // check magic number?
+  int freeSize = (hptr->size) + sizeof(header_t);
+
+  // ADD REGION TO HEAD OF FREE LIST
+  list_t *tmp = head; // keep ref to head
+  head = ptr; // make head point to new freed chunk
+  head->next = tmp; // make new head point to old head
+  head->size = freeSize;
+
+  printf("Freed Region Size: %d\n", freeSize);
+
+  // COALESCING???
+  return 0;
 }
 
 //<--TO-DO-->SID
