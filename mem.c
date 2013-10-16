@@ -55,9 +55,10 @@ Mem_Init(int sizeOfRegion)
 
     printf("Size of Region: %d\n", sizeOfRegion);
     
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR | O_CREAT);
 
-    head = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+
+    head = mmap(NULL,sizeOfRegion,PROT_READ |PROT_WRITE,MAP_ANON|MAP_PRIVATE,-1 ,0);
     if (head == MAP_FAILED) {
       perror("mmap");
       exit(1);
