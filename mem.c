@@ -157,23 +157,35 @@ Mem_Free(void *ptr)
 {
   printf("I'm calling: Mem_Free()\n");
   if (ptr == NULL) {
+    printf("null ptr in free\n");
     return -1;
   }
 
   // FIND SIZE OF FREE REGION
   header_t *hptr = (void *) ptr - sizeof(header_t);
+  list_t *lptr = (void *) ptr;
   // check magic number?
   int freeSize = (hptr->size) + sizeof(header_t);
 
-  // ADD REGION TO HEAD OF FREE LIST
-  list_t *tmp = head; // keep ref to head
-  head = ptr; // make head point to new freed chunk
-  head->next = tmp; // make new head point to old head
-  head->size = freeSize;
-
   printf("Freed Region Size: %d\n", freeSize);
 
-  // COALESCING???
+  // COALESCING -- need to work on more
+  if (head == (lptr + lptr->size)) { 
+    // chunk at head of list occurs directly after new chunk
+    head->size += lptr->size;
+    head = lptr;
+  }
+  else if (lptr == (head + head->size)) {
+    // chunk at head of list occurs directly before new chunk
+    head->size += lptr->size;
+  }
+  else {
+    // ADD REGION TO HEAD OF FREE LIST
+    list_t *tmp = head; // keep ref to head
+    head = lptr; // make head point to new freed chunk
+    head->next = tmp; // make new head point to old head
+    head->size = freeSize;
+  }
   return 0;
 }
 
