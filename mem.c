@@ -76,10 +76,9 @@ void *
 Mem_Alloc(int size, int style)
 {
     header_t *hPointer = NULL;
+    int newSize =0;
     list_t *memPointer = NULL;
     list_t *tmp = head;
-    list_t *parent = NULL;
-    list_t *previousNode = NULL;
     int bestSize;
     if(style == 0)
     {//BESTFIT
@@ -89,13 +88,9 @@ Mem_Alloc(int size, int style)
                 if(tmp->size <= bestSize){
                     memPointer = tmp;
                     bestSize = tmp->size;
-                    if (previousNode != NULL){
-                        parent = previousNode;
-                    }
                 }
                 
             }
-            previousNode = tmp;
             tmp = tmp->next;
         }//end while
         
@@ -108,13 +103,9 @@ Mem_Alloc(int size, int style)
                 if(tmp->size >= bestSize){
                     memPointer = tmp;
                     bestSize = tmp->size;
-                    if(previousNode != NULL){
-                        parent = previousNode;
-                    }
                 }
                 
             }
-            previousNode = tmp;
             tmp = tmp->next;
         }//end while
         
@@ -124,32 +115,21 @@ Mem_Alloc(int size, int style)
         while(tmp){
             if (tmp->size > size + MAX_HEADER_SIZE){
                 memPointer = tmp;
-                if(previousNode != NULL){
-                    parent = previousNode;
-                }
                 break;
             }
-            previousNode = tmp;
             tmp= tmp->next;
         }
         
     }//END FIRST FIT
     if(memPointer != NULL)
     {
-        hPointer = (void *)memPointer;
-        memPointer = (void*)hPointer + MAX_HEADER_SIZE;
-        
-        if(parent == NULL)
-        {
-            head = memPointer + size;
-        }
-        if(parent != NULL)
-        {
-            parent->next = memPointer + size;
-        }
+        tmp = memPointer;
+        newSize = memPointer->size - size - MAX_HEADER_SIZE;
+        memPointer = memPointer + memPointer->size -size;
+        hPointer = (void *)memPointer - MAX_HEADER_SIZE;
+        tmp->size = newSize;
     }
     return (void *)memPointer;
-  return 0;
 }
 
 //<--TO-DO-->KRISTIN
