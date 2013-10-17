@@ -74,8 +74,12 @@ Mem_Init(int sizeOfRegion)
 void *
 Mem_Alloc(int size, int style)
 {
-  printf("Allocating %d bytes\n", size);
-    header_t *hPointer = NULL;
+    //make sure memory allocated is in 8 byte chunks and if not change it
+    if(size%8 != 0){
+        size = size + (8 - size%8);
+    }
+    //printf("Allocating %d bytes\n", size);
+    header_t *hPointer = NULL; //initialize head pointer
     int newSize =0;
     void *memPointer = NULL;
     list_t *tmp = head;
