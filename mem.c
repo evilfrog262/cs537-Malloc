@@ -56,7 +56,6 @@ Mem_Init(int sizeOfRegion)
     
     // CALL TO MMAP AND INITIALIZE LIST HEADER
     int fd = open("/dev/zero", O_RDWR);
-    printf("%d\n",fd);
     head = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (head == MAP_FAILED) {
       perror("mmap");
@@ -75,6 +74,7 @@ Mem_Init(int sizeOfRegion)
 void *
 Mem_Alloc(int size, int style)
 {
+  printf("Allocating %d bytes\n", size);
     header_t *hPointer = NULL;
     int newSize =0;
     void *memPointer = NULL;
@@ -146,13 +146,54 @@ Mem_Free(void *ptr)
   // FIND SIZE OF FREE REGION
   header_t *hptr = (void *) ptr - sizeof(header_t);
   list_t *lptr = (void *) ptr;
-  // check magic number?
+  // check magic number? -- makes sure ptr passed in is valid, check above for magic number
   int freeSize = (hptr->size) + sizeof(header_t);
 
   printf("Freed Region Size: %d\n", freeSize);
 
+
   // COALESCING -- need to work on more
-  if (head == (lptr + lptr->size)) { 
+  list_t *currNode = head;
+  header_t *currHeader;
+  
+  //printf("lptr location: %p\nlptr size: %d\nlptr next: %p\n", lptr, lptr->size, lptr->next);
+  //printf("hptr location: %p\nhptr size: %d\n", hptr, hptr->size);
+
+  //printf("lptr: %p\nhptr size: %d\nlptr + hptr size: %p\ncurr node: %p\n", lptr, hptr->size, lptr + hptr->size, currNode);
+  while(currNode) {
+    currHeader = (void *) currNode - sizeof(header_t);
+    printf("currHeader location: %p\n", currHeader);
+    printf("currNode location: %p\ncurrNode size: %d\n", currNode, currNode->size);
+    printf("lptr location: %p\n", lptr);
+    if ((lptr + hptr->size) == currNode) {
+      // chunk at this node  occurs directly after new chunk
+      //currNode->size += lptr->size;
+      printf("COALESCE BEFORE!\n");
+      return 0;
+    } 
+    
+    // this condition is not true but should be!
+    else if (lptr == (currNode + currNode->size)) {
+      printf("COALESCE AFTER!\n");
+      // chunk at this node occurs directly before new chunk
+      currNode->size += lptr->size;
+      printf("Current Node: %p\tSize: %d\nNew Node: %p\tSize: %d\n", currNode, currNode->size, lptr, lptr->size);
+      hptr = (void *) currNode - sizeof(header_t);
+      hptr->size = currNode->size;
+      return 0;
+    }
+
+    currNode = currNode->next;
+  }
+
+
+    // ADD REGION TO HEAD OF FREE LIST
+    list_t *tmp = head; // keep ref to head
+    head = lptr; // make head point to new freed chunk
+    head->next = tmp; // make new head point to old head
+    head->size = freeSize;
+  
+  /*if (head == (lptr + lptr->size)) { 
     // chunk at head of list occurs directly after new chunk
     head->size += lptr->size;
     head = lptr;
@@ -160,14 +201,8 @@ Mem_Free(void *ptr)
   else if (lptr == (head + head->size)) {
     // chunk at head of list occurs directly before new chunk
     head->size += lptr->size;
-  }
-  else {
-    // ADD REGION TO HEAD OF FREE LIST
-    list_t *tmp = head; // keep ref to head
-    head = lptr; // make head point to new freed chunk
-    head->next = tmp; // make new head point to old head
-    head->size = freeSize;
-  }
+    }*/
+  
   return 0;
 }
 
@@ -175,7 +210,7 @@ Mem_Free(void *ptr)
 void
 Mem_Dump()
 {
-    printf("dump:\n");
+  //printf("dump:\n");
     list_t *tmp = head;
     while (tmp) {
         printf("Free Size: %d\n",tmp->size);
