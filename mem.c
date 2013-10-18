@@ -77,6 +77,7 @@ Mem_Alloc(int size, int style)
     //make sure memory allocated is in 8 byte chunks and if not change it
     if(size%8 != 0){
         size = size + (8 - size%8);
+	printf("ADDED 8!\n");
     }
     //printf("Allocating %d bytes\n", size);
     header_t *hPointer = NULL; //initialize head pointer
@@ -172,12 +173,12 @@ Mem_Free(void *ptr)
   //printf("lptr: %p\nhptr size: %d\nlptr + hptr size: %p\ncurr node: %p\n", lptr, hptr->size, lptr + hptr->size, currNode);
   while(currNode) {
     currHeader = (void *) currNode - sizeof(header_t); // correct address
-    printf("currNode location: %p\ncurrNode size: %d\n", currNode, currNode->size); 
     printf("currHeader location: %p\n", currHeader);
+    printf("currNode location: %p\ncurrNode size: %d\n", currNode, currNode->size); 
     printf("lptr location: %p\n", lptr);
     printf("hptr location: %p\n", hptr);
     printf("add: %d\n", currNode->size + 8);
-    printf("sum: %p\n", currNode + currNode->size + 8);
+    printf("sum: %p\n", currHeader + currNode->size + 8);
 
     if ((lptr + hptr->size + 8) == currNode) {
       // chunk at this node  occurs directly after new chunk
@@ -187,12 +188,11 @@ Mem_Free(void *ptr)
     } 
     
     // this condition is not true but should be!
-    else if (lptr == (currNode + currNode->size + 8)) {
+    else if ((currHeader + currNode->size + 8) == hptr) {
 
       printf("COALESCE AFTER!\n");
       // chunk at this node occurs directly before new chunk
       currNode->size += lptr->size;
-      printf("Current Node: %p\tSize: %d\nNew Node: %p\tSize: %d\n", currNode, currNode->size, lptr, lptr->size);
       hptr = (void *) currNode - sizeof(header_t);
       hptr->size = currNode->size;
       return 0;

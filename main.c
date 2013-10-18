@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "mem.h"
+#include "mem.c"
 
 int main(int argc, char** argv) {
     
