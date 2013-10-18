@@ -141,6 +141,7 @@ Mem_Alloc(int size, int style)
         m_error = E_NO_SPACE;
         return NULL;
     }
+    printf("returned ptr from alloc: %p\n", memPointer);
     return (void *)memPointer;
 }
 
@@ -156,27 +157,29 @@ Mem_Free(void *ptr)
 
   // FIND SIZE OF FREE REGION
   header_t *hptr = (void *) ptr - sizeof(header_t);
-  list_t *lptr = (void *) ptr;
+  list_t *lptr = (void *) ptr; // correct address
+  
   // check magic number? -- makes sure ptr passed in is valid, check above for magic number
   int freeSize = (hptr->size) + sizeof(header_t);
 
-  printf("Freed Region Size: %d\n", freeSize);
+  //printf("Freed Region Size: %d\n", freeSize);
 
 
   // COALESCING -- need to work on more
   list_t *currNode = head;
   header_t *currHeader;
   
-  //printf("lptr location: %p\nlptr size: %d\nlptr next: %p\n", lptr, lptr->size, lptr->next);
-  //printf("hptr location: %p\nhptr size: %d\n", hptr, hptr->size);
-
   //printf("lptr: %p\nhptr size: %d\nlptr + hptr size: %p\ncurr node: %p\n", lptr, hptr->size, lptr + hptr->size, currNode);
   while(currNode) {
-    currHeader = (void *) currNode - sizeof(header_t);
+    currHeader = (void *) currNode - sizeof(header_t); // correct address
+    printf("currNode location: %p\ncurrNode size: %d\n", currNode, currNode->size); 
     printf("currHeader location: %p\n", currHeader);
-    printf("currNode location: %p\ncurrNode size: %d\n", currNode, currNode->size);
     printf("lptr location: %p\n", lptr);
-    if ((lptr + hptr->size) == currNode) {
+    printf("hptr location: %p\n", hptr);
+    printf("add: %d\n", currNode->size + 8);
+    printf("sum: %p\n", currNode + currNode->size + 8);
+
+    if ((lptr + hptr->size + 8) == currNode) {
       // chunk at this node  occurs directly after new chunk
       //currNode->size += lptr->size;
       printf("COALESCE BEFORE!\n");
@@ -184,7 +187,8 @@ Mem_Free(void *ptr)
     } 
     
     // this condition is not true but should be!
-    else if (lptr == (currNode + currNode->size)) {
+    else if (lptr == (currNode + currNode->size + 8)) {
+
       printf("COALESCE AFTER!\n");
       // chunk at this node occurs directly before new chunk
       currNode->size += lptr->size;
