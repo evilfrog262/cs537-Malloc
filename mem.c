@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include "mem.h"
 
 int m_error;
@@ -18,6 +17,7 @@ typedef struct __list_t{
 } list_t; // this is our list structure
 
 #define MAX_HEADER_SIZE 16
+#define MAGIC 12345
 
 typedef struct __header_t{
     int size;
@@ -133,6 +133,7 @@ Mem_Alloc(int size, int style)
         memPointer = memPointer + tmp->size - size;
         hPointer = (void *)memPointer - sizeof(header_t);
         hPointer->size = size;
+        hPointer->magic = MAGIC;
         tmp->size = newSize;
         tmp->next = tmpNext; //when you update size next changes so set it back
     }
