@@ -156,29 +156,87 @@ Mem_Free(void *ptr)
   if (ptr == NULL) {
     printf("null ptr in free\n");
     return -1;
-  } // TODO: check magic number to validate ptr?
+  } 
 
+  header_t *hptr = (void *) ptr - sizeof(header_t);
+  
+  if (hptr->magic != MAGIC) {
+    printf("Invalid address\n");
+    return -1;
+  }
 
   // FIND SIZE OF FREE REGION
-  header_t *hptr = (void *) ptr - sizeof(header_t);
-  list_t *lptr = (void *) ptr; // correct address
   int freeSize = (hptr->size) + sizeof(header_t);
-
   printf("Freed Region Size: %d\n", freeSize);
 
+  // ADD FREED NODE TO FREE LIST
+  list_t *tmp = head; // keep ref to head
+  head = (void *)hptr; // make head point to new freed chunk
+  head->next = tmp; // make new head point to old head
+  head->size = freeSize;
 
   // COALESCING -- need to work on more
-  list_t *currNode = head;
-  list_t *prevNode = NULL;
-  int coalesced = 0; // 1 if freed chunk has been coalesced
+  list_t *outer = head;
+  list_t *inner = head;
+  list_t *innerPrev = NULL;
+  list_t *outerPrev = NULL;
+  void *outerDummy = NULL;
+  void *innerDummy = NULL;
   
-  while(currNode) {
-   
-    if (currNode - hptr->size == lptr) {
+  while(outer) {
+    outerDummy = outer;
+    //printf("Outer node: %p\n", outer);
+
+    while(inner) {
+      //printf("Inner node: %p\n", inner);
+      //printf("outer + outer size: %p\n", outerDummy + outer->size);
+      //printf("inner + inner size: %p\n", innerDummy + inner->size);
+      //printf("outer prev: %p\n", outerPrev);
+      innerDummy = inner;
+      if (inner == outer) {
+	//printf("skip!\n");
+	innerPrev = inner;
+	inner = inner->next;
+	continue;
+      }
+
+      if (outerDummy + outer->size == innerDummy) {
+	//printf("first if!\n");
+	//printf("outer prev: %p\n", outerPrev);
+	outer->size += inner->size;
+	if (innerPrev == NULL) {
+	  head = inner->next;
+	} else {
+	  innerPrev->next = inner->next;
+	}
+      }
+      else if (outerDummy == innerDummy + inner->size) {
+	//printf("outer prev: %p\n", outerPrev);
+	//printf("second if!\n");
+	inner->size += outer->size;
+	if (outerPrev == NULL) {
+	  head = outer->next;
+	} else {
+	  outerPrev->next = outer->next;
+	}
+      }
+      innerPrev = inner;
+      inner = inner->next;
+    }
+    outerPrev = outer;
+    outer = outer->next;
+  }
+    /*dummy = currNode;
+    // NOTE: rounding
+    printf("difference: %p\n", dummy - hptr->size);
+    printf("lptr: %p\nhptr: %p\n", lptr, hptr);
+    printf("sum: %p\n", dummy + currNode->size);
+    printf("currNode %d\n", currNode->size);
+    if (dummy - hptr->size == lptr) {
       // chunk at this node occurs directly after new chunk
       printf("COALESCE BEFORE!\n");
       lptr->next = currNode->next;
-      hptr->size += currNode->size/sizeof(list_t) + sizeof(header_t);
+      hptr->size += currNode->size + sizeof(header_t);
       if (prevNode != NULL) {
 	prevNode->next = ptr - sizeof(header_t);
       } else {
@@ -188,24 +246,21 @@ Mem_Free(void *ptr)
     } 
     
     // this condition is true now
-    else if ((void *)(currNode + currNode->size/sizeof(list_t)) == hptr) {
+    // NOTE: rounding
+    else if ((dummy + currNode->size == hptr)) {
       printf("COALESCE AFTER!\n");
       // chunk at this node occurs directly before new chunk
-      // maybe want the next to stay the same?? currNode->next = lptr->next;
       currNode->size += hptr->size + sizeof(header_t);
       coalesced = 1;
-    }
+     }
     prevNode = currNode;
     currNode = currNode->next;
   }
 
   // ADD REGION TO HEAD OF FREE LIST
   if (coalesced == 0) {
-    list_t *tmp = head; // keep ref to head
-    head = lptr; // make head point to new freed chunk
-    head->next = tmp; // make new head point to old head
-    head->size = freeSize;
-  }
+    
+  }*/
   return 0;
 }
 

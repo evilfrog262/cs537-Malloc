@@ -9,15 +9,16 @@ int main(int argc, char** argv) {
     
     Mem_Dump();
     void *ptr = Mem_Alloc(100, 0);
-    printf("ptr: %p\n",ptr);
-    Mem_Dump();
     void *ptr2 = Mem_Alloc(100, 0);
-    printf("ptr2: %p\n",ptr2);
     void *ptr3 = Mem_Alloc(100, 0);
+    void *ptr4 = Mem_Alloc(100, 0);
     Mem_Dump();
     Mem_Free(ptr2);
     Mem_Dump();
     Mem_Free(ptr3);
+    Mem_Dump();
+    Mem_Free(ptr4);
+    Mem_Free(ptr);
     Mem_Dump();
     return 0;
 }
