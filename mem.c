@@ -90,7 +90,7 @@ Mem_Alloc(int size, int style)
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
                 if(tmp->size <= bestSize){
-                    memPointer = tmp;
+		  memPointer = tmp;
                     bestSize = tmp->size;
                 }
                 
@@ -105,7 +105,7 @@ Mem_Alloc(int size, int style)
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
                 if(tmp->size >= bestSize){
-                    memPointer = tmp;
+		  memPointer = tmp;
                     bestSize = tmp->size;
                 }
                 
@@ -118,7 +118,7 @@ Mem_Alloc(int size, int style)
     {// FIRST FIT
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
-                memPointer = tmp;
+	      memPointer = tmp;
                 break;
             }
             tmp= tmp->next;
@@ -154,14 +154,14 @@ Mem_Free(void *ptr)
 
   // CHECK FOR NULL POINTER
   if (ptr == NULL) {
-    printf("null ptr in free\n");
+    m_error = E_BAD_POINTER;
     return -1;
   } 
 
   header_t *hptr = (void *) ptr - sizeof(header_t);
   
   if (hptr->magic != MAGIC) {
-    printf("Invalid address\n");
+    m_error = E_BAD_POINTER;
     return -1;
   }
 
@@ -182,11 +182,15 @@ Mem_Free(void *ptr)
   list_t *outerPrev = NULL;
   void *outerDummy = NULL;
   void *innerDummy = NULL;
+  int outerCount = 0;
+  int innerCount = 0;
   
   while(outer) {
     outerDummy = outer;
-    //printf("Outer node: %p\n", outer);
-
+    inner = head;
+    innerCount = 0;
+        	
+      
     while(inner) {
       //printf("Inner node: %p\n", inner);
       //printf("outer + outer size: %p\n", outerDummy + outer->size);
@@ -194,38 +198,79 @@ Mem_Free(void *ptr)
       //printf("outer prev: %p\n", outerPrev);
       innerDummy = inner;
       if (inner == outer) {
-	//printf("skip!\n");
-	innerPrev = inner;
-	inner = inner->next;
-	continue;
+        //printf("skip!\n");
+        innerPrev = inner;
+	innerCount++;
+        inner = inner->next;
+        continue;
       }
 
-      if (outerDummy + outer->size == innerDummy) {
-	//printf("first if!\n");
-	//printf("outer prev: %p\n", outerPrev);
-	outer->size += inner->size;
-	if (innerPrev == NULL) {
-	  head = inner->next;
-	} else {
-	  innerPrev->next = inner->next;
+      if (outerCount < innerCount) {
+	if (outerDummy + outer->size == innerDummy) {
+	  printf("condition true\n");
+	  outer->size += inner->size;
+	  outer->next = inner->next;
+	  innerPrev = outer;
+	}  
+	else if (outerDummy == innerDummy + inner->size) {
+	  inner->size += outer->size;
+	  if (outerPrev != NULL) {
+	    outerPrev->next = inner;
+	  } else {
+	    head = inner;
+	    outer = outer->next;
+	    outerCount++;
+	  }
 	}
+      } 
+
+      else if (outerCount > innerCount) {
+	if (outerDummy + outer->size == innerDummy) {
+	  outer->size += inner->size;
+	  if (innerPrev != NULL) {
+	    innerPrev->next = outer;
+	  } else {
+	    head = outer;
+	  }
+	}
+	else if (outerDummy == innerDummy + inner->size) {
+	  inner->size += outer->size;
+	  inner->next = outer->next;
+	}
+      }
+
+      /*if (outerDummy + outer->size == innerDummy) {
+        //printf("first if!\n");
+        //printf("outer prev: %p\n", outerPrev);
+        outer->size += inner->size;
+        if (innerPrev == NULL) {
+         head = inner->next;
+        } else {
+         innerPrev->next = inner->next;
+        }
       }
       else if (outerDummy == innerDummy + inner->size) {
-	//printf("outer prev: %p\n", outerPrev);
-	//printf("second if!\n");
-	inner->size += outer->size;
-	if (outerPrev == NULL) {
-	  head = outer->next;
-	} else {
-	  outerPrev->next = outer->next;
-	}
-      }
-      innerPrev = inner;
+        //printf("outer prev: %p\n", outerPrev);
+         //printf("second if!\n");
+        inner->size += outer->size;
+        if (outerPrev == NULL) {
+         head = outer->next;
+        } else {
+         outerPrev->next = outer->next;
+        }
+	}*/
+      //innerPrev = inner;
+      innerCount++;
       inner = inner->next;
     }
     outerPrev = outer;
+    outerCount++;
     outer = outer->next;
   }
+
+      
+
+
     /*dummy = currNode;
     // NOTE: rounding
     printf("difference: %p\n", dummy - hptr->size);
@@ -271,7 +316,7 @@ Mem_Dump()
   //printf("dump:\n");
     list_t *tmp = head;
     while (tmp) {
-        printf("Free Size: %d\n",tmp->size);
+      printf("Free Size: %d\tPointer: %p\n",tmp->size, tmp);
         tmp = tmp->next;
     }
 }
