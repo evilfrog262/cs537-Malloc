@@ -86,7 +86,7 @@ Mem_Alloc(int size, int style)
     int bestSize;
     if(style == 0)
     {//BESTFIT
-        bestSize = 32000;
+        bestSize = 2000000000;
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
                 if(tmp->size <= bestSize){
