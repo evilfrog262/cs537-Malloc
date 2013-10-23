@@ -37,19 +37,19 @@ int
 Mem_Init(int sizeOfRegion)
 {
     printf("I'm calling : mem_init()\n");
-
+    
     // CHECK FOR FAILURE CASES
     if (sizeOfRegion <= 0 || callsToInit > 0) {
-      m_error = E_BAD_ARGS;
-      return -1;
+        m_error = E_BAD_ARGS;
+        return -1;
     }
-
+    
     // CALCULATE SIZE OF REGION
     pageSize = getpagesize();
     printf("Page Size: %d\n", pageSize);
     // make sure region is evenly divisible by page size
     if ( (sizeOfRegion % pageSize) != 0) {
-      sizeOfRegion += (pageSize - (sizeOfRegion % pageSize));
+        sizeOfRegion += (pageSize - (sizeOfRegion % pageSize));
     }
     printf("Size of Region: %d\n", sizeOfRegion);
     
@@ -58,14 +58,14 @@ Mem_Init(int sizeOfRegion)
     int fd = open("/dev/zero", O_RDWR);
     head = mmap(NULL, sizeOfRegion, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (head == MAP_FAILED) {
-      perror("mmap");
-      exit(1);
+        perror("mmap");
+        exit(1);
     }
     head->size = sizeOfRegion;
     head->next = NULL;
     close(fd);
-
-
+    
+    
     callsToInit++;
     return 0;
 }
@@ -90,7 +90,7 @@ Mem_Alloc(int size, int style)
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
                 if(tmp->size <= bestSize){
-		  memPointer = tmp;
+                    memPointer = tmp;
                     bestSize = tmp->size;
                 }
                 
@@ -105,7 +105,7 @@ Mem_Alloc(int size, int style)
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
                 if(tmp->size >= bestSize){
-		  memPointer = tmp;
+                    memPointer = tmp;
                     bestSize = tmp->size;
                 }
                 
@@ -118,7 +118,7 @@ Mem_Alloc(int size, int style)
     {// FIRST FIT
         while(tmp){
             if (tmp->size >= size + sizeof(header_t)){
-	      memPointer = tmp;
+                memPointer = tmp;
                 break;
             }
             tmp= tmp->next;
@@ -150,173 +150,112 @@ Mem_Alloc(int size, int style)
 int
 Mem_Free(void *ptr)
 {
-  printf("I'm calling: Mem_Free()\n");
-
-  // CHECK FOR NULL POINTER
-  if (ptr == NULL) {
-    m_error = E_BAD_POINTER;
-    return -1;
-  } 
-
-  header_t *hptr = (void *) ptr - sizeof(header_t);
-  
-  if (hptr->magic != MAGIC) {
-    m_error = E_BAD_POINTER;
-    return -1;
-  }
-
-  // FIND SIZE OF FREE REGION
-  int freeSize = (hptr->size) + sizeof(header_t);
-  printf("Freed Region Size: %d\n", freeSize);
-
-  // ADD FREED NODE TO FREE LIST
-  list_t *tmp = head; // keep ref to head
-  head = (void *)hptr; // make head point to new freed chunk
-  head->next = tmp; // make new head point to old head
-  head->size = freeSize;
-
-  // COALESCING -- need to work on more
-  list_t *outer = head;
-  list_t *inner = head;
-  list_t *innerPrev = NULL;
-  list_t *outerPrev = NULL;
-  void *outerDummy = NULL;
-  void *innerDummy = NULL;
-  int outerCount = 0;
-  int innerCount = 0;
-  
-  while(outer) {
-    outerDummy = outer;
-    inner = head;
-    innerCount = 0;
-        	
-      
-    while(inner) {
-      //printf("Inner node: %p\n", inner);
-      //printf("outer + outer size: %p\n", outerDummy + outer->size);
-      //printf("inner + inner size: %p\n", innerDummy + inner->size);
-      //printf("outer prev: %p\n", outerPrev);
-      innerDummy = inner;
-      if (inner == outer) {
-        //printf("skip!\n");
-        innerPrev = inner;
-	innerCount++;
-        inner = inner->next;
-        continue;
-      }
-
-      if (outerCount < innerCount) {
-	if (outerDummy + outer->size == innerDummy) {
-	  printf("condition true\n");
-	  outer->size += inner->size;
-	  outer->next = inner->next;
-	  innerPrev = outer;
-	}  
-	else if (outerDummy == innerDummy + inner->size) {
-	  inner->size += outer->size;
-	  if (outerPrev != NULL) {
-	    outerPrev->next = inner;
-	  } else {
-	    head = inner;
-	    outer = outer->next;
-	    outerCount++;
-	  }
-	}
-      } 
-
-      else if (outerCount > innerCount) {
-	if (outerDummy + outer->size == innerDummy) {
-	  outer->size += inner->size;
-	  if (innerPrev != NULL) {
-	    innerPrev->next = outer;
-	  } else {
-	    head = outer;
-	  }
-	}
-	else if (outerDummy == innerDummy + inner->size) {
-	  inner->size += outer->size;
-	  inner->next = outer->next;
-	}
-      }
-
-      /*if (outerDummy + outer->size == innerDummy) {
-        //printf("first if!\n");
-        //printf("outer prev: %p\n", outerPrev);
-        outer->size += inner->size;
-        if (innerPrev == NULL) {
-         head = inner->next;
-        } else {
-         innerPrev->next = inner->next;
-        }
-      }
-      else if (outerDummy == innerDummy + inner->size) {
-        //printf("outer prev: %p\n", outerPrev);
-         //printf("second if!\n");
-        inner->size += outer->size;
-        if (outerPrev == NULL) {
-         head = outer->next;
-        } else {
-         outerPrev->next = outer->next;
-        }
-	}*/
-      //innerPrev = inner;
-      innerCount++;
-      inner = inner->next;
+    printf("I'm calling: Mem_Free()\n");
+    
+    // CHECK FOR NULL POINTER
+    if (ptr == NULL) {
+        m_error = E_BAD_POINTER;
+        return -1;
     }
-    outerPrev = outer;
-    outerCount++;
-    outer = outer->next;
-  }
-
-      
-
-
-    /*dummy = currNode;
-    // NOTE: rounding
-    printf("difference: %p\n", dummy - hptr->size);
-    printf("lptr: %p\nhptr: %p\n", lptr, hptr);
-    printf("sum: %p\n", dummy + currNode->size);
-    printf("currNode %d\n", currNode->size);
-    if (dummy - hptr->size == lptr) {
-      // chunk at this node occurs directly after new chunk
-      printf("COALESCE BEFORE!\n");
-      lptr->next = currNode->next;
-      hptr->size += currNode->size + sizeof(header_t);
-      if (prevNode != NULL) {
-	prevNode->next = ptr - sizeof(header_t);
-      } else {
-	head = ptr - sizeof(header_t);
-      }
-      coalesced = 1;
-    } 
     
-    // this condition is true now
-    // NOTE: rounding
-    else if ((dummy + currNode->size == hptr)) {
-      printf("COALESCE AFTER!\n");
-      // chunk at this node occurs directly before new chunk
-      currNode->size += hptr->size + sizeof(header_t);
-      coalesced = 1;
-     }
-    prevNode = currNode;
-    currNode = currNode->next;
-  }
-
-  // ADD REGION TO HEAD OF FREE LIST
-  if (coalesced == 0) {
+    header_t *hptr = (void *) ptr - sizeof(header_t);
     
-  }*/
-  return 0;
+    if (hptr->magic != MAGIC) {
+        m_error = E_BAD_POINTER;
+        return -1;
+    }
+    
+    // FIND SIZE OF FREE REGION
+    int freeSize = (hptr->size) + sizeof(header_t);
+    printf("Freed Region Size: %d\n", freeSize);
+    
+    // ADD FREED NODE TO FREE LIST
+    list_t *tmp = head; // keep ref to head
+    head = (void *)hptr; // make head point to new freed chunk
+    head->next = tmp; // make new head point to old head
+    head->size = freeSize;
+    
+    // COALESCING -- need to work on more
+    list_t *outer = head;
+    list_t *inner = head;
+    list_t *innerPrev = NULL;
+    list_t *outerPrev = NULL;
+    void *outerDummy = NULL;
+    void *innerDummy = NULL;
+    int outerCount = 0;
+    int innerCount = 0;
+    
+    while(outer) {
+        outerDummy = outer;
+        inner = head;
+        innerCount = 0;
+        
+        
+        while(inner) {
+            innerDummy = inner;
+            if (inner == outer) {
+                innerPrev = inner;
+                innerCount++;
+                inner = inner->next;
+                continue;
+            }
+            
+            if (outerCount < innerCount) {
+                printf("outerdummy:%p\t outer->sizeL:%d\t sum:%p\t innerDummy:%p\n",outerDummy,outer->size,outerDummy+outer->size,innerDummy);
+                if (outerDummy + outer->size == innerDummy) {
+                    printf("**************************\n");
+                    printf("condition true\n");
+                    outer->size += inner->size;
+                    outer->next = inner->next;
+                    innerPrev = outer;
+                }
+                else if (outerDummy == innerDummy + inner->size) {
+                    inner->size += outer->size;
+                    printf("////////////////////////\n");
+                    if (outerPrev != NULL) {
+                        outerPrev->next = inner;
+                    } else {
+                        outer = outer->next;
+                        head = outer; // head should be new outer not inner
+                        outerCount++;
+                    }
+                }
+            }
+            
+            else if (outerCount > innerCount) {
+                if (outerDummy + outer->size == innerDummy) {
+                    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+                    outer->size += inner->size;
+                    if (innerPrev != NULL) {
+                        innerPrev->next = outer;
+                    } else {
+                        head = outer;
+                    }
+                }
+                else if (outerDummy == innerDummy + inner->size) {
+                    printf("#############################\n");
+                    inner->size += outer->size;
+                    inner->next = outer->next;
+                }
+            }
+            innerCount++;
+            inner = inner->next;
+        }
+        outerPrev = outer;
+        outerCount++;
+        outer = outer->next;
+    }
+    return 0;
 }
 
 //<--TO-DO-->SID
 void
 Mem_Dump()
 {
-  //printf("dump:\n");
+    //printf("dump:\n");
     list_t *tmp = head;
     while (tmp) {
-      printf("Free Size: %d\tPointer: %p\n",tmp->size, tmp);
+        printf("Free Size: %d\tPointer: %p\n",tmp->size, tmp);
         tmp = tmp->next;
     }
 }
